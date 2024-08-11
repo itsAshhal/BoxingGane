@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SimpleBoxing.Audio;
 using SimpleBoxing.Enemy;
 using SimpleBoxing.Input;
 using Unity.VisualScripting;
@@ -36,7 +37,9 @@ namespace SimpleBoxing.Player
         private bool m_shouldGoBack = false;
 
         [SerializeField] Animator m_rightHandAnim;
+        public Animator RightHandAnim => m_rightHandAnim;
         [SerializeField] Animator m_leftHandAnim;
+        public Animator LeftHandAnim => m_leftHandAnim;
 
         public CinematicsController.ShakeLevel M_ShakeLevel;
         public float ShakeDuration = .25f;
@@ -48,6 +51,8 @@ namespace SimpleBoxing.Player
         [SerializeField] SphereCollider m_hitArea;
         public bool m_isBlocking = false;
         [SerializeField] float m_blockRecoveryTime = 1f;
+        public int TotalBlocks = 0;
+        public bool CanBlock = true;
 
         public enum PunchState
         {
@@ -85,6 +90,19 @@ namespace SimpleBoxing.Player
 
             m_rightHintDefaultPosition = m_rightHint.position;
             m_leftHintDefaultPosition = m_leftHint.position;
+
+
+        }
+
+        private void Start()
+        {
+            m_hitArea.enabled = false;
+            Invoke(nameof(EnableHitArea), GameplayManager.Instance.GameplayStartTime);
+        }
+
+        void EnableHitArea()
+        {
+            m_hitArea.enabled = true;
         }
 
 
@@ -196,10 +214,32 @@ namespace SimpleBoxing.Player
         {
             GameplayManager.Instance.M_GameplayState = GameplayManager.GameplayState.On;
         }
+
+        public void DisablePunchForDuration(float duration)
+        {
+            m_canPunch = false;
+            Invoke(nameof(EnablePunches), duration);
+        }
+        void EnablePunches()
+        {
+            m_canPunch = true;
+        }
         public void RecoverBlock()
         {
             m_isBlocking = false;
             m_hitArea.enabled = true;
+        }
+        public void OnBlockBroken()
+        {
+            CanBlock = false;
+            m_rightHandAnim.CrossFade("Idle", .1f);
+            m_leftHandAnim.CrossFade("Idle", .1f);
+            Invoke(nameof(EnableBlockAgain), .75f);
+        }
+
+        void EnableBlockAgain()
+        {
+            CanBlock = true;
         }
         #endregion
 
@@ -209,6 +249,11 @@ namespace SimpleBoxing.Player
         private void OnFingerReleased(Touch arg0)
         {
             m_isBlocking = false;
+            TotalBlocks = 0;
+
+            m_rightHandAnim.CrossFade("Idle", .1f);
+            m_leftHandAnim.CrossFade("Idle", .1f);
+            m_canPunch = true;
             //m_hitArea.enabled = true;
             Debug.Log($"Finger released");
         }
@@ -253,6 +298,8 @@ namespace SimpleBoxing.Player
             // this is the place where the user blocks the enemy
             /*int currentStateIndex = Random.Range(0, m_totalBlockAnimations);
             m_anim.CrossFade($"Block_{currentStateIndex}", .1f);*/
+
+            if (CanBlock == false) return;
 
             m_rightHandAnim.CrossFade("Block", .1f);
             m_leftHandAnim.CrossFade("Block", .1f);
@@ -395,6 +442,10 @@ namespace SimpleBoxing.Player
 
         #region TriggerEvents
 
+        public void OnPunchCollidedWithEnemy(Collider collider)
+        {
+            Debug.Log($"Punch collided with enemy");
+        }
 
         public void OnTriggerEnter_Hit(Collider collider)
         {
@@ -405,6 +456,25 @@ namespace SimpleBoxing.Player
             try
             {
                 var npc = GameplayManager.Instance.NPC;
+
+                // ok before checking anything else, lets try figuring out if the enemy is punching or not
+                if (npc.IsPunching)
+                {
+                    Debug.Log($"The npc was punching so both the punches are deflected");
+                    // deflect both and then
+                    m_rightHandAnim.CrossFade("Deflect", .1f);
+                    m_leftHandAnim.CrossFade("Deflect", .1f);
+                    npc.RightHandAnim.CrossFade("Deflect", .1f);
+                    npc.LeftHandAnim.CrossFade("Deflect", .1f);
+                    npc.IsPunching = false;
+
+                    // play the block sound as the punches didn't hit technically
+                    AudioController.Instance.PlaySound(PunchSound.Block);
+
+                    return;
+                }
+
+
                 if (npc.m_isBlocking == false)
                 {
 
@@ -414,6 +484,8 @@ namespace SimpleBoxing.Player
 
                     // do the head hit
                     npc.DoHeadHit();
+
+
 
 
                     // now we need some particles as well
@@ -429,6 +501,9 @@ namespace SimpleBoxing.Player
                                                 EffectsController.Instance.HitEffects_NormalPunch[Random.Range(0, EffectsController.Instance.HitEffects_NormalPunch.Length)],
                                                 m_particleSpawnTransform.position
                                                 );
+
+
+                        AudioController.Instance.PlaySound(PunchSound.Hard);
                     }
                     else
                     {
@@ -439,6 +514,8 @@ namespace SimpleBoxing.Player
                                                 EffectsController.Instance.HitEffects_SpecialPunch[Random.Range(0, EffectsController.Instance.HitEffects_SpecialPunch.Length)],
                                                 m_particleSpawnTransform.position
                                                 );
+
+                        AudioController.Instance.PlaySound(PunchSound.Normal);
                     }
 
 
@@ -449,14 +526,22 @@ namespace SimpleBoxing.Player
                     // ok since we're blocking, lets do a different animation and deflect the player punches back
 
 
+
                     // checking the block breaker
                     npc.TotalPunchesOnBlock++;
                     if (npc.TotalPunchesOnBlock >= npc.MaxPunchesToBreakTheBlock)
                     {
+                        // since we've broken the enemy's block, lets do a slow
+                        GameplayManager.Instance.DoSlowMotion(.25f);
+
                         // break the NPC block
                         npc.TotalPunchesOnBlock = 0;
 
                         npc.CancelAutomatedBlock();
+
+                        // ok so here for the block breaker, we need a stun animation and for a certain time
+                        // the enemy and the players can't do anything until the enemy is recovered from the stun
+                        npc.DoStun();
 
                         // Apply the damage as well
                         GameplayManager.Instance.RegisterHit(GameplayManager.HitFrom.Player);
@@ -464,6 +549,8 @@ namespace SimpleBoxing.Player
                         // do the head hit
                         npc.DoHeadHit();
                     }
+
+                    AudioController.Instance.PlaySound(PunchSound.Block);
 
                     GameplayManager.Instance.NPC.SetupCombo();
 

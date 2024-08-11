@@ -8,12 +8,16 @@ using SimpleBoxing.Player;
 using UnityEngine.Animations.Rigging;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering;
 
 namespace SimpleBoxing
 {
-    public class GameplayManager : Singleton<GameplayManager>
+    public class GameplayManager : MonoBehaviour
     {
+        public static GameplayManager Instance;
+
         private Vector3 m_enemySpawnPosition;
+        private SlowMo m_slowMo;
         [SerializeField] NPC_Ai m_npc;
         [SerializeField] PlayerBoxingController m_playerController;
         [Range(0.01f, 0.4f)]
@@ -31,20 +35,56 @@ namespace SimpleBoxing
         public int ComboSystemStartsAfterDifficulty = 5;
         [Tooltip("Hit damage registered for special punch")]
         [SerializeField] float SpecialPunchMultiplier = 1.5f;
+        [Tooltip("As first we need to display the animation of the enemy falling down as spawning, wait for RigBuilder setup")]
+        public float GameplayStartTime = 2f;
 
+
+        private void Awake()
+        {
+            if (Instance != this && Instance != null) Destroy(this);
+            else Instance = this;
+        }
 
         private void Start()
         {
             m_enemySpawnPosition = m_npc.transform.position;
+            m_slowMo = GetComponent<SlowMo>();
             Debug.Log($"Probability of the enemy blocking is {GetBlockingProbability()}%");
             SetUpDamageSystem();
             SetupEnemyAnimationSpeed();
 
             Gameplay_UI_Manager.Instance.DoFadeAnimation(false);
             Gameplay_UI_Manager.Instance.LevelText.text = Get_DifficultyLevel().ToString();
-
+            Invoke(nameof(StartGameplay), GameplayStartTime);
 
         }
+
+        void StartGameplay()
+        {
+            NPC.GetComponent<RigBuilder>().enabled = true;
+            NPC.HitArea().enabled = true;
+            M_GameplayState = GameplayState.On;
+        }
+
+
+        [ContextMenu("Set difficulty level back to 5")]
+        public void SetPlayerPrefManually()
+        {
+            Set_DifficultyLevel(4);
+        }
+
+        [ContextMenu("Set time scale low")]
+        public void SetTimeScaleLow()
+        {
+            GetComponent<SlowMo>().DoSlowMotion(0.05f);
+        }
+
+        [ContextMenu("Set time scale high")]
+        public void SetTimeScaleHigh()
+        {
+            GetComponent<SlowMo>().UndoSlowMotion();
+        }
+
 
 
         public enum HitFrom
@@ -167,6 +207,13 @@ namespace SimpleBoxing
                     // since in this case player has punched the enemy
                     //Gameplay_UI_Manager.Instance.EnemyHealthBar.fillAmount -= PlayerDamageAmount;
 
+                    // Enemy should recover its punches
+                    NPC.RecoverEnemyPunches();
+
+                    // so whenever the player gets damage, the hand anims need to be idle
+                    NPC.LeftHandAnim.CrossFade("Idle", .1f);
+                    NPC.RightHandAnim.CrossFade("Idle", .1f);
+
                     // check if player has done a special punch
                     bool m_isSpecialPunch = PlayerController.M_PunchState == PlayerBoxingController.PunchState.SpecialPunchRight ||
                         PlayerController.M_PunchState == PlayerBoxingController.PunchState.SpecialPunchLeft;
@@ -190,6 +237,10 @@ namespace SimpleBoxing
                         )
                     {
                         // player has died 
+
+                        // turn off the enemy Hit area as well
+                        NPC.HitArea().enabled = false;
+
                         M_GameplayState = GameplayState.Off;
 
                         // turn the rigBuilder off as well
@@ -261,6 +312,15 @@ namespace SimpleBoxing
             Gameplay_UI_Manager.Instance.DoFadeAnimation(true, true);
         }
 
+        public void DoSlowMotion(float duration)
+        {
+            m_slowMo.DoSlowMotion(m_slowMo.slowDownFactor);
+            Invoke(nameof(UndoSlowMotion), duration);
+        }
+        void UndoSlowMotion()
+        {
+            m_slowMo.UndoSlowMotion();
+        }
 
         void RestartScene()
         {

@@ -1969,7 +1969,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &5674485840428035136
 Transform:
   m_ObjectHideFlags: 0
@@ -2005,7 +2005,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2d312f8182a74d14b889c254b89102e3, type: 2}
+  - {fileID: 2100000, guid: 7acf1149ccac9174d918acc6ad0f905b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5101,7 +5101,6 @@ GameObject:
   - component: {fileID: 7523611383496585571}
   - component: {fileID: 3899928597784251035}
   - component: {fileID: 107073277891289841}
-  - component: {fileID: 8743004599310023807}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -5196,14 +5195,14 @@ MonoBehaviour:
   m_rightHandPunchTarget: {fileID: 7275303794259303631}
   m_leftHandPunchTarget: {fileID: 4622402455548196745}
   m_distanceThreshold: 0.05
-  m_waitTimeForComingBack: 0.1
+  m_waitTimeForComingBack: 1
   m_rightHandAnim: {fileID: 5815500527680156540}
   m_leftHandAnim: {fileID: 6755768798103624883}
   M_ShakeLevel: 2
   ShakeDuration: 0.1
   m_particleSpawnTransform: {fileID: 3097526682109768532}
   TotalPunches: 0
-  m_punchesDelay: 0.1
+  m_punchesDelay: 0.25
   m_hitArea: {fileID: 2811115579095170214}
   m_isBlocking: 0
   m_blockRecoveryTime: 1.5
@@ -5232,20 +5231,6 @@ MonoBehaviour:
   - m_Rig: {fileID: 6984498537345806267}
     m_Active: 1
   m_Effectors: []
---- !u!114 &8743004599310023807
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3482110338738133549}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4537cfb3a1c4dcd4f8b42d370e28e0b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  slowDownFactor: 0.05
-  slowDownLength: 2
 --- !u!1 &3513093785410955400
 GameObject:
   m_ObjectHideFlags: 0
@@ -7571,9 +7556,10 @@ GameObject:
   - component: {fileID: 7010373275748320726}
   - component: {fileID: 2831207311782585179}
   - component: {fileID: 1722272820813834590}
+  - component: {fileID: 5182764903683902501}
   m_Layer: 0
   m_Name: TriggerController
-  m_TagString: Untagged
+  m_TagString: PlayerHands
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7627,6 +7613,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EncounterTagName: Enemy
+  OpponentPunchCollisionName: EnemyHands
   _OnTriggerEnter:
     m_PersistentCalls:
       m_Calls:
@@ -7648,6 +7635,48 @@ MonoBehaviour:
   _OnTriggerExit:
     m_PersistentCalls:
       m_Calls: []
+  _OnBothPunchesCollided:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3899928597784251035}
+        m_TargetAssemblyTypeName: SimpleBoxing.Player.PlayerBoxingController, Assembly-CSharp
+        m_MethodName: OnPunchCollidedWithEnemy
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!54 &5182764903683902501
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5034229047767085182}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &5085046252591851284
 GameObject:
   m_ObjectHideFlags: 0
@@ -8056,9 +8085,10 @@ GameObject:
   - component: {fileID: 5471978389087241602}
   - component: {fileID: 1558330271901660692}
   - component: {fileID: 8263037333155806126}
+  - component: {fileID: 8770325137286112774}
   m_Layer: 0
   m_Name: TriggerController
-  m_TagString: Untagged
+  m_TagString: PlayerHands
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8112,6 +8142,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EncounterTagName: Enemy
+  OpponentPunchCollisionName: EnemyHands
   _OnTriggerEnter:
     m_PersistentCalls:
       m_Calls:
@@ -8133,6 +8164,48 @@ MonoBehaviour:
   _OnTriggerExit:
     m_PersistentCalls:
       m_Calls: []
+  _OnBothPunchesCollided:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3899928597784251035}
+        m_TargetAssemblyTypeName: SimpleBoxing.Player.PlayerBoxingController, Assembly-CSharp
+        m_MethodName: OnPunchCollidedWithEnemy
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!54 &8770325137286112774
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5194671112207845384}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &5198909868981938005
 GameObject:
   m_ObjectHideFlags: 0

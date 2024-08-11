@@ -1,3 +1,4 @@
+using SimpleBoxing.Audio;
 using SimpleBoxing.Player;
 using System;
 using System.Collections;
@@ -5,6 +6,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using static SimpleBoxing.Player.PlayerBoxingController;
 using Random = UnityEngine.Random;
 
@@ -16,9 +18,11 @@ namespace SimpleBoxing.Enemy
         [SerializeField] Animator m_rightHandAnim;
         public Animator RightHandAnim { get { return m_rightHandAnim; } }
         [SerializeField] Animator m_leftHandAnim;
+        [SerializeField] RigBuilder m_rigBuilder;
         public Animator LeftHandAnim { get { return m_leftHandAnim; } }
         [SerializeField] float m_headAnimationRecoveryTime;
         [SerializeField] Collider m_hitArea;//
+        public Collider HitArea() => m_hitArea;
         private Animator m_anim;
         public bool m_isBlocking = false;
         [SerializeField] Transform m_particleSpawnTransform;
@@ -47,6 +51,21 @@ namespace SimpleBoxing.Enemy
         /// </summary>
         public int TotalPunchesOnBlock = 0;
         public bool IsAutomatedBlocking = false;
+        public bool IsComboEnabled = false;
+        public bool CanPunch = true;
+        public float EnemyPunchRecoveryTime = 1.5f;
+        public bool IsPunching = false;
+        [Tooltip("So it will take this number of punches to break the player block")]
+        public int PlayerBlockBreakerPunches = 2;
+        [Tooltip("Separate punches for breaking player's block")]
+        public int CurrentBlockPunches = 0;
+        [Tooltip("So when the enemy starts doing a combo, he can throw minimum of these punches")]
+        public int MaxCombosAtATimeMin = 3;
+        [Tooltip("So when the enemy starts doing a combo, he can throw maximum of these punches")]
+        public int MaxCombosAtATimeMax = 5;
+        public float StunRecoveryTime = 5f;  // as because the animation takes 5 seconds approx seconds to complete
+        public bool IsStunned = false;
+        private float m_stunTimer = 0.0f;
 
         public enum PunchState
         {
@@ -59,9 +78,11 @@ namespace SimpleBoxing.Enemy
 
 
             m_anim = GetComponent<Animator>();
+            m_rigBuilder = GetComponent<RigBuilder>();
             SetupCombo();
             ExactBlockTime = Random.Range(BlockTimerMin, BlockTimerMax);
             ExactBlockDuration = Random.Range(BlockDurationMin, BlockDurationMax);
+
 
         }
 
@@ -70,13 +91,94 @@ namespace SimpleBoxing.Enemy
             // when the enemy is awaken, play a particle effect for spawning
             var effects = EffectsController.Instance.EnemyRespawnEffect;
             foreach (var effect in effects) Instantiate(effect, this.transform.position, Quaternion.identity);
+
+            Debug.Log($"NPC Ai Started");
+            HitArea().enabled = false;
+
+            Invoke(nameof(EnableHitAre), GameplayManager.Instance.GameplayStartTime);
+        }
+
+        void EnableHitAre()
+        {
+            HitArea().enabled = true;
         }
 
         private void Update()
         {
-            if (GameplayManager.Instance.Get_DifficultyLevel() >= 5) AutomatedBlock();
+            if (GameplayManager.Instance.Get_DifficultyLevel() >= 5)
+            {
+                if (IsComboEnabled == false) AutomatedBlock();
+                PunchWhenPlayerIsBlocking();//
+            }
+
+
+            if (IsStunned)
+            {
+                m_stunTimer += Time.deltaTime;
+                GameplayManager.Instance.PlayerController.m_canPunch = false;
+                m_rigBuilder.enabled = false;
+                CanPunch = false;
+                m_hitArea.enabled = false;
+                m_anim.SetBool("IsStunned", true);
+
+                if (m_stunTimer >= StunRecoveryTime)
+                {
+                    m_rigBuilder.enabled = true;
+                    m_hitArea.enabled = true;
+                    GameplayManager.Instance.PlayerController.m_canPunch = true;
+                    IsStunned = false;
+                    m_anim.SetBool("IsStunned", false);
+                    m_stunTimer = 0.0f;
+                    CanPunch = true;
+                }
+
+
+
+
+            }
+
 
         }
+
+        /// <summary>
+        /// Call this method when the blocks of the enemy are broken by player's consistent punches
+        /// </summary>
+        public void DoStun()
+        {
+            IsStunned = true;
+
+            // spawn a stun particle as well
+            var tr = EffectsController.Instance.StunTransform;
+            var particles = EffectsController.Instance.StunParticles;
+            var part = particles[Random.Range(0, particles.Length)];
+            var instantiatedPart = Instantiate(part, tr.position, Quaternion.identity);
+            instantiatedPart.AddComponent<Destroyer>().destroyTime = 2f;
+        }
+
+
+
+        public void RecoverEnemyPunches()
+        {
+            StartCoroutine(RecoverEnemyPunchesCoroutine());
+        }
+
+        IEnumerator RecoverEnemyPunchesCoroutine()
+        {
+            CanPunch = false;
+            yield return new WaitForSeconds(EnemyPunchRecoveryTime);
+            CanPunch = true;
+        }
+
+        /// <summary>
+        /// Triggered mostly when the player is blocking, for a specified time,
+        /// then the enemy tries to make some punches but usually after level 5
+        /// </summary>
+        void PunchWhenPlayerIsBlocking()
+        {
+            Debug.Log($"Player is blocking so enemy is trying to punch, yes");
+            EnableCombo();
+        }
+
 
 
         public void CancelAutomatedBlock()
@@ -124,6 +226,9 @@ namespace SimpleBoxing.Enemy
 
         IEnumerator HeadAnimationCoroutine()
         {
+            m_anim.enabled = false;
+            m_anim.enabled = true;
+            m_anim.SetLayerWeight(1, 0f);
             m_anim.SetLayerWeight(1, 1f);
 
             if (GameplayManager.Instance.PlayerController.M_PunchState == PlayerBoxingController.PunchState.NormalPunchRight
@@ -167,6 +272,8 @@ namespace SimpleBoxing.Enemy
         public void DoRightHandPunch()
         {
             if (IsAutomatedBlocking) return;
+            if (CanPunch == false) return;
+            IsPunching = true;
             m_rightHandAnim.CrossFade("Punch", .1f);
             M_PunchState = PunchState.Right;
         }
@@ -175,6 +282,8 @@ namespace SimpleBoxing.Enemy
         public void DoLeftHandPunch()
         {
             if (IsAutomatedBlocking) return;
+            if (CanPunch == false) return;
+            IsPunching = true;
             m_leftHandAnim.CrossFade("Punch", .1f);
             M_PunchState = PunchState.Left;
         }
@@ -182,6 +291,7 @@ namespace SimpleBoxing.Enemy
         [ContextMenu("Block")]
         public void DoBlock()
         {
+            IsPunching = false;
             m_rightHandAnim.CrossFade("Block", .1f);
             m_leftHandAnim.CrossFade("Block", .1f);
 
@@ -189,6 +299,8 @@ namespace SimpleBoxing.Enemy
             // so the NPC doesn't register the head blow
             //m_hitArea.enabled = false;
         }
+
+
 
 
         public void PlayerIsAttacking(PlayerBoxingController playerController)
@@ -290,6 +402,8 @@ namespace SimpleBoxing.Enemy
 
         void EnableCombo()
         {
+            if (IsComboEnabled) return;
+
             // Cancelling the invokes so we can start again
             CancelInvoke(nameof(DoSomeAttack));
 
@@ -298,17 +412,19 @@ namespace SimpleBoxing.Enemy
 
         IEnumerator ComboCoroutine()
         {
+            IsComboEnabled = true;
             yield return new WaitForSeconds(m_comboStartsAfter);
 
             // Cancelling the invokes so we can start again
             CancelInvoke(nameof(DoSomeAttack));
 
             // define max number of combos, lets say they are 3
-            for (int i = 1; i <= 3; i++)
+            for (int i = 1; i <= Random.Range(MaxCombosAtATimeMin, MaxCombosAtATimeMax + 1); i++)
             {
                 DoSomeAttack();
                 yield return new WaitForSeconds(m_comboRepititionRate);
             }
+            IsComboEnabled = false;
         }
 
         bool ShouldBlock()
@@ -387,17 +503,28 @@ namespace SimpleBoxing.Enemy
 
         #region TriggerEvents
 
+        public void OnPunchCollidedWithEnemy(Collider collider)
+        {
+            Debug.Log($"Punch collided with player");
+        }
+
         public void OnTriggerEnter_Hit(Collider collider)
         {
             try
             {
                 // Apply the damage as well
                 Debug.Log($"Got hit by the enemy");
+                IsPunching = false;
 
                 // check if the player is blocking or not
-                if (GameplayManager.Instance.PlayerController.m_isBlocking)
+                if (GameplayManager.Instance.PlayerController.m_isBlocking && CurrentBlockPunches < PlayerBlockBreakerPunches)
                 {
+                    // technially we're blocking
+                    AudioController.Instance.PlaySound(PunchSound.Block);
+
                     // play the deflect animation as well and the return
+                    GameplayManager.Instance.PlayerController.TotalBlocks++;
+                    CurrentBlockPunches++;
                     if (M_PunchState == PunchState.Right) m_rightHandAnim.CrossFade("Deflect", .1f);
                     else if (M_PunchState == PunchState.Left) m_leftHandAnim.CrossFade("Deflect", .1f);
                     Debug.Log($"Deflected");
@@ -412,7 +539,22 @@ namespace SimpleBoxing.Enemy
                     return;
                 }
 
+                // here technically the enemy managed to hit the player
+                AudioController.Instance.PlaySound(PunchSound.Normal);
+
+                GameplayManager.Instance.PlayerController.TotalBlocks = 0;
+                CurrentBlockPunches = 0;
+
+                GameplayManager.Instance.PlayerController.OnBlockBroken();
+
                 GameplayManager.Instance.RegisterHit(GameplayManager.HitFrom.Enemy);
+
+                GameplayManager.Instance.PlayerController.DisablePunchForDuration(.5f);
+
+                // ok so as we registered the hit successfully, make sure the player hands are at the 
+                // starting position as well
+                GameplayManager.Instance.PlayerController.RightHandAnim.CrossFade("Idle", .1f);
+                GameplayManager.Instance.PlayerController.LeftHandAnim.CrossFade("Idle", .1f);
 
                 // animate the main camera as well
                 CinematicsController.Instance.MainCamera.GetComponent<Animator>().CrossFade("Hit", .1f);

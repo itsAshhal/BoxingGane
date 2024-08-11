@@ -11,9 +11,11 @@ namespace SimpleBoxing
     public class TriggerController : MonoBehaviour
     {
         [SerializeField] string EncounterTagName = "Enemy";
+        [SerializeField] string OpponentPunchCollisionName = "EnemyPunch";
         public UnityEvent<Collider> _OnTriggerEnter;
         public UnityEvent<Collider> _OnTriggerStay;
         public UnityEvent<Collider> _OnTriggerExit;
+        public UnityEvent<Collider> _OnBothPunchesCollided;
         private SphereCollider m_sphereCollider;
 
         private void Awake()
@@ -33,6 +35,7 @@ namespace SimpleBoxing
 
         private void OnTriggerEnter(Collider other)
         {
+            if (other.CompareTag(OpponentPunchCollisionName)) _OnBothPunchesCollided?.Invoke(other);
             if (other.CompareTag(EncounterTagName) == false) return;
             this._OnTriggerEnter?.Invoke(other);
 

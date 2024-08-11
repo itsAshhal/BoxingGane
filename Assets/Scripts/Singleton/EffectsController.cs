@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace SimpleBoxing
@@ -11,10 +12,13 @@ namespace SimpleBoxing
         public ParticleSystem[] BlockEffects;
         public ParticleSystem[] DeathEffects;
         public ParticleSystem[] EnemyRespawnEffect;
+        public Transform StunTransform;
+        public ParticleSystem[] StunParticles;
 
         public void SpawnParticle(ParticleSystem particle, Vector3 spawnPosition)
         {
-            Destroy(Instantiate(particle, spawnPosition, Quaternion.identity), 1f);
+            var effect = Instantiate(particle, spawnPosition, Quaternion.identity);
+            effect.AddComponent<Destroyer>().destroyTime = 2f;
         }
     }
 
