@@ -65,7 +65,7 @@ namespace SimpleBoxing.Enemy
         public int MaxCombosAtATimeMax = 5;
         public float StunRecoveryTime = 5f;  // as because the animation takes 5 seconds approx seconds to complete
         public bool IsStunned = false;
-        private float m_stunTimer = 0.0f;
+        public float m_stunTimer = 0.0f;
 
         public enum PunchState
         {
@@ -115,11 +115,14 @@ namespace SimpleBoxing.Enemy
             if (IsStunned)
             {
                 m_stunTimer += Time.deltaTime;
-                GameplayManager.Instance.PlayerController.m_canPunch = false;
+                //GameplayManager.Instance.PlayerController.m_canPunch = false;
                 m_rigBuilder.enabled = false;
                 CanPunch = false;
-                m_hitArea.enabled = false;
-                m_anim.SetBool("IsStunned", true);
+                m_isBlocking = false;
+                //m_hitArea.enabled = false;
+                //m_anim.SetBool("IsStunned", true);
+                m_anim.CrossFade("StunnedDance", .1f);
+                m_anim.SetLayerWeight(2, 1f);  // the layer for the Stun dance but not for the whole body as avatar masks are being used
 
                 if (m_stunTimer >= StunRecoveryTime)
                 {
@@ -127,9 +130,10 @@ namespace SimpleBoxing.Enemy
                     m_hitArea.enabled = true;
                     GameplayManager.Instance.PlayerController.m_canPunch = true;
                     IsStunned = false;
-                    m_anim.SetBool("IsStunned", false);
+                    //m_anim.SetBool("IsStunned", false);
                     m_stunTimer = 0.0f;
                     CanPunch = true;
+                    m_anim.SetLayerWeight(2, 0f);
                 }
 
 
@@ -539,6 +543,16 @@ namespace SimpleBoxing.Enemy
                     return;
                 }
 
+                // make a simple conditioal for checking if the player blocks and enemy punches are equals it means the block will be broekn now
+                if (CurrentBlockPunches == PlayerBlockBreakerPunches)
+                {
+                    // now since the block of the player just got broken, do some stun animation on the camera
+                    // CinematicsController.Instance.StunPlayer();
+                    Debug.Log("Blocks are equal to punches");
+                    GameplayManager.Instance.PlayerController.IsStunned = true;//
+                    // return;
+                }
+
                 // here technically the enemy managed to hit the player
                 AudioController.Instance.PlaySound(PunchSound.Normal);
 
@@ -553,6 +567,7 @@ namespace SimpleBoxing.Enemy
 
                 // ok so as we registered the hit successfully, make sure the player hands are at the 
                 // starting position as well
+                //GameplayManager.Instance.M_GameplayState = GameplayManager.GameplayState.Off;
                 GameplayManager.Instance.PlayerController.RightHandAnim.CrossFade("Idle", .1f);
                 GameplayManager.Instance.PlayerController.LeftHandAnim.CrossFade("Idle", .1f);
 

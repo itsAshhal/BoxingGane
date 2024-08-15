@@ -6,6 +6,7 @@ using SimpleBoxing.Enemy;
 using SimpleBoxing.Input;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using UnityEngine.Scripting;
 using static UnityEngine.Rendering.DebugUI;
 using Random = UnityEngine.Random;
@@ -49,11 +50,15 @@ namespace SimpleBoxing.Player
         [Tooltip("So if the player does a punch, he can perform another punch after this seconds")]
         [SerializeField] float m_punchesDelay = 1f;
         [SerializeField] SphereCollider m_hitArea;
+        public SphereCollider HitArea() => m_hitArea;
         public bool m_isBlocking = false;
         [SerializeField] float m_blockRecoveryTime = 1f;
         public int TotalBlocks = 0;
         public bool CanBlock = true;
-
+        public BoxingGlove[] Gloves;
+        public bool IsStunned = false;
+        private float m_stunTimer = 0.0f;
+        public float maxStunTime = 2f;
         public enum PunchState
         {
             NormalPunchRight, NormalPunchLeft, SpecialPunchRight, SpecialPunchLeft, None
@@ -109,6 +114,31 @@ namespace SimpleBoxing.Player
         private void Update()
         {
             Debug.Log($"HitArea for player {m_hitArea.enabled}, block -> {m_isBlocking}");
+            // checking for stun
+            if (IsStunned)
+            {
+                Debug.Log($"Under the IsStunned condition of the mainPlayer");
+                m_stunTimer += Time.deltaTime;
+                CinematicsController.Instance.StunPlayer(IsStunned);
+
+                var npc = GameplayManager.Instance.NPC;
+
+                m_canPunch = false;
+                CanBlock = false;
+                npc.CanPunch = false;
+
+
+                if (m_stunTimer >= maxStunTime)
+                {
+                    IsStunned = false;
+                    CinematicsController.Instance.StunPlayer(IsStunned);
+                    m_canPunch = true;
+                    CanBlock = true;
+                    npc.CanPunch = true;
+                    m_stunTimer = 0.0f;
+                }
+            }
+
             if (M_PlayerAnimationState == PlayerAnimationState.None) return;
 
 
@@ -251,6 +281,9 @@ namespace SimpleBoxing.Player
             m_isBlocking = false;
             TotalBlocks = 0;
 
+            // set the rotation of the gloves
+            foreach (var glove in Gloves) glove.SetBlockingState();
+
             m_rightHandAnim.CrossFade("Idle", .1f);
             m_leftHandAnim.CrossFade("Idle", .1f);
             m_canPunch = true;
@@ -300,9 +333,14 @@ namespace SimpleBoxing.Player
             m_anim.CrossFade($"Block_{currentStateIndex}", .1f);*/
 
             if (CanBlock == false) return;
+            //if (m_isBlocking) return;
 
-            m_rightHandAnim.CrossFade("Block", .1f);
-            m_leftHandAnim.CrossFade("Block", .1f);
+            m_rightHandAnim.CrossFade("Block", .075f);
+            m_leftHandAnim.CrossFade("Block", .075f);
+
+            // set the rotation of the gloves
+            foreach (var glove in Gloves) glove.SetBlockingState();
+
 
             m_isBlocking = true;
             //m_hitArea.enabled = false;
@@ -477,7 +515,12 @@ namespace SimpleBoxing.Player
 
                 if (npc.m_isBlocking == false)
                 {
-
+                    npc.IsStunned = false;
+                    npc.GetComponent<Animator>().SetLayerWeight(2, 0f);
+                    npc.GetComponent<RigBuilder>().enabled = true;
+                    m_canPunch = true;
+                    npc.m_stunTimer = 0.0f;
+                    npc.CanPunch = true;
 
                     // Apply the damage as well
                     GameplayManager.Instance.RegisterHit(GameplayManager.HitFrom.Player);
@@ -485,6 +528,10 @@ namespace SimpleBoxing.Player
                     // do the head hit
                     npc.DoHeadHit();
 
+
+                    // ok here is one more thing, lets assume the enemy is being stunned, luckily we have a flag for that to check
+                    // we need to make sure if he's stunned, he still takes damage
+                    // check the implementation in the RegisterHit method of the GameplayerManager
 
 
 
@@ -532,7 +579,7 @@ namespace SimpleBoxing.Player
                     if (npc.TotalPunchesOnBlock >= npc.MaxPunchesToBreakTheBlock)
                     {
                         // since we've broken the enemy's block, lets do a slow
-                        GameplayManager.Instance.DoSlowMotion(.25f);
+                        //GameplayManager.Instance.DoSlowMotion(.1f);  // will be enabled if the clien requires it
 
                         // break the NPC block
                         npc.TotalPunchesOnBlock = 0;
@@ -549,6 +596,9 @@ namespace SimpleBoxing.Player
                         // do the head hit
                         npc.DoHeadHit();
                     }
+
+                    // Checking for stun
+
 
                     AudioController.Instance.PlaySound(PunchSound.Block);
 

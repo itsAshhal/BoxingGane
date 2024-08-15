@@ -1226,7 +1226,7 @@ SphereCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Radius: 22.65
   m_Center: {x: 0, y: 0, z: 0}
@@ -1752,7 +1752,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2310514774154243031, guid: 57d55b44e475f984ca6c72bbba5bdc70, type: 3}
+  - {fileID: 2100000, guid: f404cc578f72e6b44ad7f5321bc0bcce, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2111,7 +2111,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2310514774154243031, guid: 57d55b44e475f984ca6c72bbba5bdc70, type: 3}
+  - {fileID: 2100000, guid: f404cc578f72e6b44ad7f5321bc0bcce, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3101,7 +3101,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2310514774154243031, guid: 57d55b44e475f984ca6c72bbba5bdc70, type: 3}
+  - {fileID: 2100000, guid: f404cc578f72e6b44ad7f5321bc0bcce, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3788,7 +3788,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2310514774154243031, guid: 57d55b44e475f984ca6c72bbba5bdc70, type: 3}
+  - {fileID: 2100000, guid: f404cc578f72e6b44ad7f5321bc0bcce, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4090,6 +4090,8 @@ GameObject:
   - component: {fileID: 5690808744468905094}
   - component: {fileID: 1173895706128357482}
   - component: {fileID: 6330257914562214713}
+  - component: {fileID: 5328762035978188704}
+  - component: {fileID: 7862637150670110808}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -4134,12 +4136,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
-    are already bound by a Humanoid avatar. These transforms can only be changed
-    by Humanoid clips.\n\tTransform 'mixamorig:RightArm'\n\tTransform 'mixamorig:LeftArm'\n\tTransform
-    'mixamorig:RightHand'\n\tTransform 'mixamorig:LeftForeArm'\n\tTransform 'mixamorig:RightForeArm'\n\tTransform
-    'mixamorig:LeftHand'\n\tTransform 'mixamorig:RightArm'\n\tTransform 'mixamorig:LeftArm'\n\tTransform
-    'mixamorig:RightHand'\n\tTransform 'mixamorig:LeftForeArm'\n\tand more ..."
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -4174,6 +4171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_rightHandAnim: {fileID: 2203608410571653852}
   m_leftHandAnim: {fileID: 3214166238086694233}
+  m_rigBuilder: {fileID: 0}
   m_headAnimationRecoveryTime: 0.1
   m_hitArea: {fileID: 9095774432693778414}
   m_isBlocking: 0
@@ -4181,8 +4179,8 @@ MonoBehaviour:
   TotalPunches: 0
   TotalBlocks: 0
   HitsTaken: 0
-  m_comboStartsAfter: 2
-  m_comboRepititionRate: 2
+  m_comboStartsAfter: 4
+  m_comboRepititionRate: 1
   BlockTimerMin: 4
   BlockTimerMax: 5
   BlockDurationMin: 1
@@ -4194,7 +4192,64 @@ MonoBehaviour:
   CanPunch: 1
   EnemyPunchRecoveryTime: 1.5
   IsPunching: 0
+  PlayerBlockBreakerPunches: 3
+  CurrentBlockPunches: 0
+  MaxCombosAtATimeMin: 3
+  MaxCombosAtATimeMax: 5
+  StunRecoveryTime: 2.5
+  IsStunned: 0
+  m_stunTimer: 0
   M_PunchState: 0
+--- !u!136 &5328762035978188704
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8852265131264721166}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 11.53
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 7.88, z: 0}
+--- !u!54 &7862637150670110808
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8852265131264721166}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &1027516726547820370
 PrefabInstance:
   m_ObjectHideFlags: 0

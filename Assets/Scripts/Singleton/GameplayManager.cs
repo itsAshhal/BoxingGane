@@ -9,12 +9,122 @@ using UnityEngine.Animations.Rigging;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
+using UnityEngine.Events;
+using Unity.Properties;
 
 namespace SimpleBoxing
 {
     public class GameplayManager : MonoBehaviour
     {
+        #region ScoringAndUI
+
+        // These 3 major callbacks are called on specific areas in this script and their bindings are used by different method
+
+        [Header("ScoringAndUI")]
+        [Tooltip("When your player successfully lands the punch on the enemy but its a normal punch, use these callbacks to implement score and other stuff")]
+        public UnityEvent OnPlayerNormalPunchSucces;
+        [Tooltip("When your player successfully lands the punch on the enemy but its a hard/special punch, use these callbacks to implement score and other stuff")]
+        public UnityEvent OnPlayerHardPunchSuccess;
+        [Tooltip("When the enemy somehow manages to land a punch on you and gets a hit point, use these callbacks to implement enemy scoring and other stuff")]
+        public UnityEvent OnEnemyPunchSuccess;
+        [Tooltip("Callbacks runs when the game is over, irrespective of whether the player wins or looses")]
+        public UnityEvent<bool> OnGameOver;
+        [SerializeField] int m_playerNormalHitPunchScore;
+        [SerializeField] int m_playerHardHitPunchScore;
+        [SerializeField] int m_enemyNormalHitPunchScore;
+        [SerializeField] float RestartTimeWhenPlayerWins = 2f;
+        [Tooltip("Right now the enemy Ai seems to easy as its starting from 1 stage, we can set it to 4-5 to make a little harder")]
+        [SerializeField] int DifficultyLevelShouldStartFrom = 4;
+
+        // Callbacks
+
+        public void OnPlayerNormalPunchSuccess_Method()
+        {
+            Debug.Log($"Callback, player has landed a normal punch");
+            Gameplay_UI_Manager.Instance.AnimateScoreText(m_playerNormalHitPunchScore, ScoreAnimation.Player);
+        }
+        public void OnPlayerHardPunchSuccess_Method()
+        {
+            Debug.Log($"Callback, player has landed a hard punch");
+            Gameplay_UI_Manager.Instance.AnimateScoreText(m_playerHardHitPunchScore, ScoreAnimation.Player);
+        }
+        public void OnEnemyPunchSuccess_Method()
+        {
+            Debug.Log($"Callback, enemy has landed a normal punch");
+            Gameplay_UI_Manager.Instance.AnimateScoreText(m_enemyNormalHitPunchScore, ScoreAnimation.Enemy);
+        }
+
+        public void OnGameOver_Method(bool isPlayerTheWinner)
+        {
+            string victimName = !isPlayerTheWinner ? "Player" : "Enemy";
+            Set_DifficultyLevel(Get_DifficultyLevel() + 1);
+            Debug.Log($"Someone just died and its {victimName}");
+            StartCoroutine(GameOverCoroutine(isPlayerTheWinner));
+
+            M_GameplayState = GameplayState.Off;
+            m_playerController.HitArea().enabled = false;
+
+
+        }
+        IEnumerator GameOverCoroutine(bool isPlayerTheWinner)
+        {
+            // so if the enemy dies we need to restart the scene so the game keeps on being played
+            if (isPlayerTheWinner)
+            {
+                yield return new WaitForSeconds(RestartTimeWhenPlayerWins);
+                var _currentScore = int.Parse(Gameplay_UI_Manager.Instance.MainScoreText.text);
+                PlayerPrefs.SetInt("PlayerScore", _currentScore);
+                RestartScene();
+            }
+            else
+            {
+                // as we've died save the score limit and then go back to the main menu
+                var currentScore = int.Parse(Gameplay_UI_Manager.Instance.MainScoreText.text);
+                PlayerPrefs.SetInt("PlayerScore", currentScore);
+                Debug.Log($"Current score is set to {currentScore}");
+
+                // set the difficulty level 
+                Set_DifficultyLevel(Get_DifficultyLevel() + 1);
+
+                // ok so since we have the player current score, we need to check for the highest score as well
+                if (PlayerPrefs.HasKey("PlayerHighestScore"))
+                {
+                    int highestScore = PlayerPrefs.GetInt("PlayerHighestScore");
+                    if (currentScore > highestScore)
+                    {
+                        // set the current score as the highest score
+                        PlayerPrefs.SetInt("PlayerHighestScore", currentScore);
+                    }
+                }
+                else
+                {
+                    // in this case since we don't have the highest score so we'll save the current score as the highest one
+                    // set the current score as the highest score
+                    PlayerPrefs.SetInt("PlayerHighestScore", currentScore);
+                }
+
+                // also since we lost the game, set the playerScore to 0 so next time he starts from 0
+                PlayerPrefs.SetInt("PlayerScore", 0);
+
+                // alright since the player has lost, we don't have to restart the scene instead show the gameOver menu so
+                // the player can decide either to continue(restart) or go to the mainMenu
+                Gameplay_UI_Manager.Instance.DisplayGameOverPanel();
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            // also since we lost the game, set the playerScore to 0 so next time he starts from 0
+            PlayerPrefs.SetInt("PlayerScore", 0);
+        }
+
+
+        #endregion
+
+        #region MainImplementation
+
         public static GameplayManager Instance;
+        [Header("MainImplementation")]
 
         private Vector3 m_enemySpawnPosition;
         private SlowMo m_slowMo;
@@ -43,6 +153,13 @@ namespace SimpleBoxing
         {
             if (Instance != this && Instance != null) Destroy(this);
             else Instance = this;
+
+            // being required from the client, as the starting level enemies are 2 easy to tackle, lets just start from level 4 to make it a 
+            // little harder from the start
+            //SetPlayerPrefManually();
+
+            // since we're setting manually, set the original difficulty level as well so it doens't affect the gameplay system 
+            // and the enemy Ai
         }
 
         private void Start()
@@ -50,13 +167,29 @@ namespace SimpleBoxing
             m_enemySpawnPosition = m_npc.transform.position;
             m_slowMo = GetComponent<SlowMo>();
             Debug.Log($"Probability of the enemy blocking is {GetBlockingProbability()}%");
-            SetUpDamageSystem();
+            //SetUpDamageSystem();
             SetupEnemyAnimationSpeed();
 
             Gameplay_UI_Manager.Instance.DoFadeAnimation(false);
             Gameplay_UI_Manager.Instance.LevelText.text = Get_DifficultyLevel().ToString();
             Invoke(nameof(StartGameplay), GameplayStartTime);
 
+            // Binding callbacks
+            OnPlayerNormalPunchSucces.AddListener(OnPlayerNormalPunchSuccess_Method);
+            OnPlayerHardPunchSuccess.AddListener(OnPlayerHardPunchSuccess_Method);
+            OnEnemyPunchSuccess.AddListener(OnEnemyPunchSuccess_Method);
+            OnGameOver.AddListener(OnGameOver_Method);
+
+            // ok here when the scene reloads, we need to set the proper score for the player
+            SetScoreProperly();
+        }
+        void SetScoreProperly()
+        {
+            if (PlayerPrefs.HasKey("PlayerScore"))
+            {
+                var score = PlayerPrefs.GetInt("PlayerScore");
+                Gameplay_UI_Manager.Instance.MainScoreText.text = score < 10 ? $"0{score}" : $"{score}";
+            }
         }
 
         void StartGameplay()
@@ -149,7 +282,7 @@ namespace SimpleBoxing
                 Debug.Log($"DifficultyLevel is {PlayerPrefs.GetInt("DifficultyLevel")}");
                 return PlayerPrefs.GetInt("DifficultyLevel");
             }
-            else return 0;
+            else return DifficultyLevelShouldStartFrom;
         }
 
         public void Set_DifficultyLevel(int level) => PlayerPrefs.SetInt("DifficultyLevel", level);
@@ -171,6 +304,9 @@ namespace SimpleBoxing
                     // since in this case enemy has punched the player
                     //Gameplay_UI_Manager.Instance.PlayerHealthBar.fillAmount -= EnemyDamageAmount;
                     ReduceHealth(EnemyDamageAmount, Gameplay_UI_Manager.Instance.PlayerHealthBar);
+
+                    // Invoke the scoring callbacks
+                    OnEnemyPunchSuccess?.Invoke();
 
                     // ok since the player is hit, we need a small amount of time until the player can
                     // start punching again
@@ -200,12 +336,16 @@ namespace SimpleBoxing
                         CinematicsController.Instance.MainCamera.transform.forward = CameraConfigurerOnDeath.forward;
 
                         Invoke(nameof(NPC_DeathAnimation), DeathAnimationWaitTime);
+
+                        OnGameOver?.Invoke(false);  // false because here, enemy is the winner
                     }
 
                     break;
                 case HitFrom.Player:
                     // since in this case player has punched the enemy
                     //Gameplay_UI_Manager.Instance.EnemyHealthBar.fillAmount -= PlayerDamageAmount;
+
+
 
                     // Enemy should recover its punches
                     NPC.RecoverEnemyPunches();
@@ -221,8 +361,20 @@ namespace SimpleBoxing
                     Debug.Log($"IsSpecialPunch {m_isSpecialPunch}");
 
 
-                    if (m_isSpecialPunch) ReduceHealth(PlayerDamageAmount * SpecialPunchMultiplier, Gameplay_UI_Manager.Instance.EnemyHealthBar);
-                    else ReduceHealth(PlayerDamageAmount, Gameplay_UI_Manager.Instance.EnemyHealthBar);
+                    if (m_isSpecialPunch)
+                    {
+                        // Reduce the health
+                        ReduceHealth(PlayerDamageAmount * SpecialPunchMultiplier, Gameplay_UI_Manager.Instance.EnemyHealthBar);
+
+                        // Invoke the scoring callbacks
+                        OnPlayerHardPunchSuccess?.Invoke();
+                    }
+                    else
+                    {
+                        // Reduce the health
+                        ReduceHealth(PlayerDamageAmount, Gameplay_UI_Manager.Instance.EnemyHealthBar);
+                        OnPlayerNormalPunchSucces?.Invoke();
+                    }
 
 
 
@@ -248,13 +400,15 @@ namespace SimpleBoxing
                         NPC.GetComponent<Animator>().CrossFade("Death", .1f);
 
 
+                        OnGameOver?.Invoke(true);  // true because here, player is the winner
+
                         // since the enemy is dead, set the difficulty to next increment
-                        Set_DifficultyLevel(Get_DifficultyLevel() + 1);
+                        //Set_DifficultyLevel(Get_DifficultyLevel() + 1);
 
-                        Invoke(nameof(RestartScene), 3f);
+                        //Invoke(nameof(RestartScene), 3f);
 
 
-                        //Invoke(nameof(PlayerDeathAnimation), DeathAnimationWaitTime);
+                        Invoke(nameof(PlayerDeathAnimation), DeathAnimationWaitTime);
                     }
 
                     break;
@@ -297,7 +451,7 @@ namespace SimpleBoxing
                 );
 
             // do the fade animation as well
-            Gameplay_UI_Manager.Instance.DoFadeAnimation(true, true);
+            //Gameplay_UI_Manager.Instance.DoFadeAnimation(true, true);
 
 
         }
@@ -309,7 +463,7 @@ namespace SimpleBoxing
                 PlayerController.transform.position
                 );
 
-            Gameplay_UI_Manager.Instance.DoFadeAnimation(true, true);
+            //Gameplay_UI_Manager.Instance.DoFadeAnimation(true, true);
         }
 
         public void DoSlowMotion(float duration)
@@ -322,12 +476,14 @@ namespace SimpleBoxing
             m_slowMo.UndoSlowMotion();
         }
 
-        void RestartScene()
+        public void RestartScene()
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
 
+
+        #endregion
 
         #region Probability And Difficulty
 

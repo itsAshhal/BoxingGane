@@ -20,6 +20,8 @@ namespace SimpleBoxing
         public float M_amplitudeGain_High;
         public float ShakeDuration;
 
+        public NoiseSettings PlayerStunNoise;
+
 
         public enum ShakeLevel
         {
@@ -50,5 +52,18 @@ namespace SimpleBoxing
 
 
         }
+
+
+        /// <summary>
+        /// When the enemy breaks the block of the player, use this method to apply the stun effect (camera animation of course)
+        /// </summary>
+        public void StunPlayer(bool isStunned = false)
+        {
+            Debug.Log($"Camera stunned called {isStunned}");
+            Animator anim = m_mainCamera.GetComponent<Animator>();
+            anim.SetBool("IsStunned", isStunned);
+        }
+
+
     }
 }
