@@ -30,6 +30,14 @@ namespace SimpleBoxing.UI
             // scene load done
         }
 
+        public void OnClick_PlayGame()
+        {
+            // Set the playerHealth playerPref to 1 so it can be used again
+            PlayerPrefs.SetFloat("PlayerHealth", 0.0f);
+            PlayerPrefs.SetInt("PlayerScore", 0);
+            PlayerPrefs.SetInt("DifficultyLevel", 4);
+        }
+
     }
 
 }

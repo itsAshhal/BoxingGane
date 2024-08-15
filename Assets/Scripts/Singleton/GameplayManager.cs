@@ -74,14 +74,25 @@ namespace SimpleBoxing
                 yield return new WaitForSeconds(RestartTimeWhenPlayerWins);
                 var _currentScore = int.Parse(Gameplay_UI_Manager.Instance.MainScoreText.text);
                 PlayerPrefs.SetInt("PlayerScore", _currentScore);
+
+                // Set the playerHealth playerPref to 1 so it can be used again
+                float currentHealth = Gameplay_UI_Manager.Instance.PlayerHealthBar.fillAmount;
+                PlayerPrefs.SetFloat("PlayerHealth", (currentHealth + 0.2f));
+
                 RestartScene();
             }
             else
             {
+                // since this is the place where the player dies, make default the difficulty level
+                Set_DifficultyLevel(4);
+
                 // as we've died save the score limit and then go back to the main menu
                 var currentScore = int.Parse(Gameplay_UI_Manager.Instance.MainScoreText.text);
                 PlayerPrefs.SetInt("PlayerScore", currentScore);
                 Debug.Log($"Current score is set to {currentScore}");
+
+                // Set the playerHealth playerPref to 1 so it can be used again
+                PlayerPrefs.SetFloat("PlayerHealth", 0.0f);
 
                 // set the difficulty level 
                 Set_DifficultyLevel(Get_DifficultyLevel() + 1);
@@ -116,6 +127,7 @@ namespace SimpleBoxing
         {
             // also since we lost the game, set the playerScore to 0 so next time he starts from 0
             PlayerPrefs.SetInt("PlayerScore", 0);
+            PlayerPrefs.SetFloat("PlayerHealth", 0f);
         }
 
 
@@ -169,6 +181,7 @@ namespace SimpleBoxing
             Debug.Log($"Probability of the enemy blocking is {GetBlockingProbability()}%");
             //SetUpDamageSystem();
             SetupEnemyAnimationSpeed();
+            ManagePlayerHealth();
 
             Gameplay_UI_Manager.Instance.DoFadeAnimation(false);
             Gameplay_UI_Manager.Instance.LevelText.text = Get_DifficultyLevel().ToString();
@@ -182,6 +195,27 @@ namespace SimpleBoxing
 
             // ok here when the scene reloads, we need to set the proper score for the player
             SetScoreProperly();
+        }
+
+        /// <summary>
+        /// This method allows to dynamically increase the player heatlh level by 20% when the player wins, but if he looses, then obviously the game's gonna restart
+        /// </summary>
+        void ManagePlayerHealth()
+        {
+            // check if the key exists
+
+            if (PlayerPrefs.HasKey("PlayerHealth") == false) return;
+            Debug.Log($"Found Player Saved Health {PlayerPrefs.GetFloat("PlayerHealth")}");
+            if (PlayerPrefs.GetFloat("PlayerHealth") == 0.0f) return;
+
+            // we don't need to get the value, just increase it by 20% i.e 0.2
+            // increase the player health
+            Debug.Log($"Reaching down below");
+            Gameplay_UI_Manager.Instance.PlayerHealthBar.fillAmount = PlayerPrefs.GetFloat("PlayerHealth"); // 20% of 1 of course
+
+            /*
+             * REMEMBER TO SET THIS KEY WHEN THE GAME IS OVER, USE THAT CALLBACK => OnGameOver
+             */
         }
         void SetScoreProperly()
         {

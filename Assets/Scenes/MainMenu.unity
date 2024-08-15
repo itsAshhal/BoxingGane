@@ -582,6 +582,9 @@ MonoBehaviour:
   m_blockRecoveryTime: 1
   TotalBlocks: 0
   CanBlock: 1
+  Gloves: []
+  IsStunned: 0
+  maxStunTime: 2
   M_PunchState: 0
   M_PlayerAnimationState: 0
   m_canPunch: 1
@@ -16071,6 +16074,18 @@ MonoBehaviour:
         m_TargetAssemblyTypeName: SimpleBoxing.UI.MainMenu_UI, Assembly-CSharp
         m_MethodName: LoadScene
         m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 6091053940188209869}
+        m_TargetAssemblyTypeName: SimpleBoxing.UI.MainMenu_UI, Assembly-CSharp
+        m_MethodName: OnClick_PlayGame
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
