@@ -14,9 +14,11 @@ namespace SimpleBoxing
         public ParticleSystem[] EnemyRespawnEffect;
         public Transform StunTransform;
         public ParticleSystem[] StunParticles;
+        public bool UseVFX = true;
 
         public void SpawnParticle(ParticleSystem particle, Vector3 spawnPosition)
         {
+            if (!UseVFX) return;
             var effect = Instantiate(particle, spawnPosition, Quaternion.identity);
             effect.AddComponent<Destroyer>().destroyTime = 2f;
         }

@@ -1203,7 +1203,7 @@ Transform:
   m_GameObject: {fileID: 3148241476294562279}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.0000016689298, z: -0, w: -1}
-  m_LocalPosition: {x: 0, y: 78.3, z: -1.1}
+  m_LocalPosition: {x: 0, y: 78.3, z: 5.3}
   m_LocalScale: {x: 1.0125735, y: 1.0125735, z: 1.0125735}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4190,7 +4190,7 @@ MonoBehaviour:
   IsAutomatedBlocking: 0
   IsComboEnabled: 0
   CanPunch: 1
-  EnemyPunchRecoveryTime: 1.5
+  EnemyPunchRecoveryTime: 0.5
   IsPunching: 0
   PlayerBlockBreakerPunches: 3
   CurrentBlockPunches: 0

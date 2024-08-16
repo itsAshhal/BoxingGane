@@ -495,6 +495,14 @@ namespace SimpleBoxing.Player
             {
                 var npc = GameplayManager.Instance.NPC;
 
+                // this is just for the test, so we can ease the game out a little and keep things balances
+                //if (npc.IsPunching) return;
+                /*
+                 * NOTE -> we can test here and also we can test in the method where the player is actually throwing the punch
+                 * so if the NPC is punching we can't punch, but that depends on the game feel, if it feels good we'll go for it
+                 * otherwise we'll stick to that plan
+                 */
+
                 // ok before checking anything else, lets try figuring out if the enemy is punching or not
                 if (npc.IsPunching)
                 {
@@ -508,6 +516,10 @@ namespace SimpleBoxing.Player
 
                     // play the block sound as the punches didn't hit technically
                     AudioController.Instance.PlaySound(PunchSound.Block);
+
+                    // setting the consecutive thing for the player
+                    GameplayManager.Instance.IsConsecutive = false;
+                    GameplayManager.Instance.PlayerConsecutivePunches = 1;
 
                     return;
                 }
@@ -524,6 +536,10 @@ namespace SimpleBoxing.Player
 
                     // Apply the damage as well
                     GameplayManager.Instance.RegisterHit(GameplayManager.HitFrom.Player);
+
+                    // since we've managed to land a hit, we need to apply the concept of consecutive punches as well
+                    GameplayManager.Instance.IsConsecutive = true;
+                    GameplayManager.Instance.PlayerConsecutivePunches++;
 
                     // do the head hit
                     npc.DoHeadHit();
@@ -570,7 +586,7 @@ namespace SimpleBoxing.Player
 
                 else
                 {
-                    // ok since we're blocking, lets do a different animation and deflect the player punches back
+                    // ok since its blocking, lets do a different animation and deflect the player punches back
 
 
 
@@ -593,11 +609,23 @@ namespace SimpleBoxing.Player
                         // Apply the damage as well
                         GameplayManager.Instance.RegisterHit(GameplayManager.HitFrom.Player);
 
+                        // as we've broken the block so its consdiered a punch but will be checked later
+                        GameplayManager.Instance.IsConsecutive = true;
+                        GameplayManager.Instance.PlayerConsecutivePunches++;
+
                         // do the head hit
                         npc.DoHeadHit();
                     }
 
                     // Checking for stun
+
+                    // here the enemy is blocking so use the consecutibe
+                    // as we've broken the block so its consdiered a punch but will be checked later
+                    else
+                    {
+                        GameplayManager.Instance.IsConsecutive = false;
+                        GameplayManager.Instance.PlayerConsecutivePunches = 1;
+                    }
 
 
                     AudioController.Instance.PlaySound(PunchSound.Block);

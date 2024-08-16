@@ -46,12 +46,8 @@ namespace ShadowShift.UI
             transform.DOScale(TargetScale, AnimationDuration).SetEase(EaseType).OnComplete(onComplete)
                      .OnComplete(() =>
                      {
-                         // Return to original scale after the animation
-
-                         transform.DOScale(Vector3.one, AnimationDuration).SetEase(EaseType).OnComplete(() =>
-                         {
-                             PerformButtonAction();
-                         });
+                         // Return to original scale after the animation;
+                         PerformButtonAction();
                      });
         }
 

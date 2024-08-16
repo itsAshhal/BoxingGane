@@ -105,13 +105,14 @@ namespace SimpleBoxing.Enemy
 
         private void Update()
         {
+            // Checking for difficulty level
             if (GameplayManager.Instance.Get_DifficultyLevel() >= 5)
             {
                 if (IsComboEnabled == false) AutomatedBlock();
                 PunchWhenPlayerIsBlocking();//
             }
 
-
+            // Checking for Stun
             if (IsStunned)
             {
                 m_stunTimer += Time.deltaTime;
@@ -141,8 +142,18 @@ namespace SimpleBoxing.Enemy
 
             }
 
+            // Checking for default block count when the enemy leaves or enters the block state
+            if (m_isBlocking)
+            {
+                if (BlockAlreadyRedefined) return;
+                TotalBlocks = 0;
+                BlockAlreadyRedefined = true;
+            }
+            else BlockAlreadyRedefined = false;
 
         }
+
+        bool BlockAlreadyRedefined = false;
 
         /// <summary>
         /// Call this method when the blocks of the enemy are broken by player's consistent punches
@@ -155,8 +166,8 @@ namespace SimpleBoxing.Enemy
             var tr = EffectsController.Instance.StunTransform;
             var particles = EffectsController.Instance.StunParticles;
             var part = particles[Random.Range(0, particles.Length)];
-            var instantiatedPart = Instantiate(part, tr.position, Quaternion.identity);
-            instantiatedPart.AddComponent<Destroyer>().destroyTime = 2f;
+            EffectsController.Instance.SpawnParticle(part, tr.position);   //Instantiate(part, tr.position, Quaternion.identity);
+            //instantiatedPart.AddComponent<Destroyer>().destroyTime = 2f;
         }
 
 
@@ -270,6 +281,9 @@ namespace SimpleBoxing.Enemy
 
             // Ensure the final weight is set to 0
             m_anim.SetLayerWeight(1, 0f);
+
+            // this can be discussed but still doesn't feel bad
+            DoInstantAttack();
         }
 
         [ContextMenu("RightPunch")]
@@ -278,6 +292,8 @@ namespace SimpleBoxing.Enemy
             if (IsAutomatedBlocking) return;
             if (CanPunch == false) return;
             IsPunching = true;
+            CancelInvoke(nameof(ResetIsPunching));
+            Invoke(nameof(ResetIsPunching), .6f);
             m_rightHandAnim.CrossFade("Punch", .1f);
             M_PunchState = PunchState.Right;
         }
@@ -288,20 +304,39 @@ namespace SimpleBoxing.Enemy
             if (IsAutomatedBlocking) return;
             if (CanPunch == false) return;
             IsPunching = true;
+            CancelInvoke(nameof(ResetIsPunching));
+            Invoke(nameof(ResetIsPunching), .6f);
             m_leftHandAnim.CrossFade("Punch", .1f);
             M_PunchState = PunchState.Left;
         }
 
+        void ResetIsPunching() => IsPunching = false;
+
         [ContextMenu("Block")]
         public void DoBlock()
         {
-            IsPunching = false;
+            //IsPunching = false;
             m_rightHandAnim.CrossFade("Block", .1f);
             m_leftHandAnim.CrossFade("Block", .1f);
+
+            // lets a random value which will decide whether the enemy should initiate an instant punch right after the block
+            DoInstantAttack();
 
             // since we're blocking here, we need somehow to disable the trigger controller
             // so the NPC doesn't register the head blow
             //m_hitArea.enabled = false;
+        }
+
+        void DoInstantAttack()
+        {
+            if (GameplayManager.Instance.Get_DifficultyLevel() < GameplayManager.Instance.AtWhichLevelTheInstantAttackShouldBeStarted) return;
+            int tooManyTakes = Random.Range(0, 100);
+            if (tooManyTakes % 2 == 0)
+            {
+                // do the instant attack
+                if (Random.Range(0, 10) % 2 == 0) DoRightHandPunch();
+                else DoLeftHandPunch();
+            }
         }
 
 
@@ -483,7 +518,8 @@ namespace SimpleBoxing.Enemy
             int difficultyLevel = GameplayManager.Instance.Get_DifficultyLevel();
 
             // Calculate min based on the difficulty level directly
-            int min = 8 - difficultyLevel;
+            //int min = 8 - difficultyLevel;
+            int min = 0;
             int max = min + 2;  // Extend the range for randomization
 
             // Ensure min is always less than max
@@ -518,7 +554,7 @@ namespace SimpleBoxing.Enemy
             {
                 // Apply the damage as well
                 Debug.Log($"Got hit by the enemy");
-                IsPunching = false;
+                //IsPunching = false;
 
                 // check if the player is blocking or not
                 if (GameplayManager.Instance.PlayerController.m_isBlocking && CurrentBlockPunches < PlayerBlockBreakerPunches)
@@ -552,6 +588,10 @@ namespace SimpleBoxing.Enemy
                     GameplayManager.Instance.PlayerController.IsStunned = true;//
                     // return;
                 }
+
+                // since the player has been hit, use the consecutive here 
+                GameplayManager.Instance.IsConsecutive = false;
+                GameplayManager.Instance.PlayerConsecutivePunches = 1;
 
                 // here technically the enemy managed to hit the player
                 AudioController.Instance.PlaySound(PunchSound.Normal);

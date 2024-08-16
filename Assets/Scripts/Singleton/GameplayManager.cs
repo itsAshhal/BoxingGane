@@ -35,22 +35,35 @@ namespace SimpleBoxing
         [SerializeField] float RestartTimeWhenPlayerWins = 2f;
         [Tooltip("Right now the enemy Ai seems to easy as its starting from 1 stage, we can set it to 4-5 to make a little harder")]
         [SerializeField] int DifficultyLevelShouldStartFrom = 4;
+        public int AtWhichLevelTheStatsShouldStopIncreasing = 20;
+        [Tooltip("It has 2 main features, when the enemy takes a punch and gets hit, he suddenly punches to break the player's momentum also when he takes a block he can do an instant punch again as well")]
+        public int AtWhichLevelTheInstantAttackShouldBeStarted = 10;
+
+        [Header("Consecutive Punches")]
+        public int PlayerConsecutivePunches = 0;
+        public int ConsecutivePunchesLimit = 10;
+        public bool IsConsecutive = false;
 
         // Callbacks
 
         public void OnPlayerNormalPunchSuccess_Method()
         {
             Debug.Log($"Callback, player has landed a normal punch");
-            Gameplay_UI_Manager.Instance.AnimateScoreText(m_playerNormalHitPunchScore, ScoreAnimation.Player);
+            Debug.Log($"On normal hit the IsConsecutive is {IsConsecutive}");
+            //Gameplay_UI_Manager.Instance.AnimateScoreText(m_playerNormalHitPunchScore, ScoreAnimation.Player);
+            Gameplay_UI_Manager.Instance.AnimateScoreText(PlayerConsecutivePunches, ScoreAnimation.Player);
         }
         public void OnPlayerHardPunchSuccess_Method()
         {
             Debug.Log($"Callback, player has landed a hard punch");
-            Gameplay_UI_Manager.Instance.AnimateScoreText(m_playerHardHitPunchScore, ScoreAnimation.Player);
+            //Gameplay_UI_Manager.Instance.AnimateScoreText(m_playerHardHitPunchScore, ScoreAnimation.Player);
+            Gameplay_UI_Manager.Instance.AnimateScoreText(PlayerConsecutivePunches * 2, ScoreAnimation.Player);
         }
         public void OnEnemyPunchSuccess_Method()
         {
             Debug.Log($"Callback, enemy has landed a normal punch");
+            IsConsecutive = false;
+            PlayerConsecutivePunches = 1;
             Gameplay_UI_Manager.Instance.AnimateScoreText(m_enemyNormalHitPunchScore, ScoreAnimation.Enemy);
         }
 
@@ -85,6 +98,9 @@ namespace SimpleBoxing
             {
                 // since this is the place where the player dies, make default the difficulty level
                 Set_DifficultyLevel(4);
+
+                // so we get the exactly the same score
+                yield return new WaitForSeconds(Gameplay_UI_Manager.Instance.ScoreAppearanceDuration + .05f);
 
                 // as we've died save the score limit and then go back to the main menu
                 var currentScore = int.Parse(Gameplay_UI_Manager.Instance.MainScoreText.text);
@@ -179,7 +195,7 @@ namespace SimpleBoxing
             m_enemySpawnPosition = m_npc.transform.position;
             m_slowMo = GetComponent<SlowMo>();
             Debug.Log($"Probability of the enemy blocking is {GetBlockingProbability()}%");
-            //SetUpDamageSystem();
+            SetUpDamageSystem();
             SetupEnemyAnimationSpeed();
             ManagePlayerHealth();
 
@@ -544,14 +560,15 @@ namespace SimpleBoxing
             // we need to set the damage
             // remember that, higher the difficulty level, Player damage is low and enemy damage is higher
             var level = Get_DifficultyLevel();  // Ensure this returns an int
+            if (level == AtWhichLevelTheStatsShouldStopIncreasing) level = AtWhichLevelTheStatsShouldStopIncreasing;
             float prob = level / 10.0f;  // Use 10.0f to ensure floating-point division
 
-            float ExtractedValue = prob / 3f;  // No need to cast again, it's already float
+            float ExtractedValue = prob / 3.5f;  // No need to cast again, it's already float
 
             // now add this value to EnemyDamageAmount and subtract it from PlayerDamageAmount
             Debug.Log($"ExtractedValue {ExtractedValue}");
             EnemyDamageAmount += ExtractedValue;
-            PlayerDamageAmount -= ExtractedValue;
+            //PlayerDamageAmount -= ExtractedValue;  // for right now we're not increasing the player damage amount
         }
 
         void SetupEnemyAnimationSpeed()

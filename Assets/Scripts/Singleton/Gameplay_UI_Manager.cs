@@ -66,13 +66,21 @@ namespace SimpleBoxing
         }
         public IEnumerator ScoreAnimationCoroutine(int punchScore, ScoreAnimation scoreAnimation)
         {
+
             Animator anim = scoreAnimation == ScoreAnimation.Enemy ? EnemyScoreAnimatedText.GetComponent<Animator>() : PlayerScoreAnimatedText.GetComponent<Animator>();
 
-            anim.GetComponent<TMP_Text>().text = $"+{punchScore}";
+            // make a different condition for writing animation texts(scores) for the player and for the enemy as well
+            if (scoreAnimation == ScoreAnimation.Player)
+            {
+                //punchScore = GameplayManager.Instance.PlayerConsecutivePunches;
+                PlayerScoreAnimatedText.text = "+" + punchScore.ToString();
+            }
+            else anim.GetComponent<TMP_Text>().text = $"-{punchScore}";
+
             anim.CrossFade("Appear", .1f);
             yield return new WaitForSeconds(ScoreAppearanceDuration);
             anim.CrossFade("Disappear", .1f);
-            m_totalScore = PlayerPrefs.GetInt("PlayerScore");
+            m_totalScore = int.Parse(MainScoreText.text);
             m_totalScore += punchScore;
             PlayerPrefs.SetInt("PlayerScore", m_totalScore);
 
@@ -91,6 +99,27 @@ namespace SimpleBoxing
                     scoreString = $"0{m_totalScore}";
                     MainScoreText.text = $"{m_totalScore}";
                 }
+                PlayerPrefs.SetInt("PlayerScore", m_totalScore);
+
+            }
+            else
+            {
+                // we also want the score to be decreased by the opponent as well
+                string scoreString = MainScoreText.text;
+
+                // decrease it by opponent score, good thing we have the param punchScore
+                var result = int.Parse(scoreString) - punchScore;
+
+                // check if the score is going below 0
+                if (result > 0)
+                {
+
+                    scoreString = result.ToString();
+
+                    if (int.Parse(scoreString) < 10) scoreString = "0" + scoreString;
+                    MainScoreText.text = scoreString;
+                }
+
 
             }
         }

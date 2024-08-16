@@ -1035,7 +1035,7 @@ Transform:
   m_GameObject: {fileID: 1206648693945182597}
   serializedVersion: 2
   m_LocalRotation: {x: 0.09253232, y: -0.011825743, z: 0.03883666, w: 0.9948818}
-  m_LocalPosition: {x: 0.028, y: 0.61, z: 0.077}
+  m_LocalPosition: {x: 0.028, y: 0.611, z: 0.21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2198,8 +2198,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1669479094985481871}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.09253223, y: -0.011825744, z: 0.038836658, w: 0.99488175}
-  m_LocalPosition: {x: 0.02, y: 0.626, z: -0.3}
+  m_LocalRotation: {x: 0.09253032, y: -0.011826573, z: 0.03883631, w: 0.9948819}
+  m_LocalPosition: {x: 0.02, y: 1.65, z: -0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2253,7 +2253,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1669479094985481871}
-  m_Enabled: 0
+  m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: cda2ca4486047cb4abafbf1943d4c256, type: 2}
   m_CullingMode: 0
@@ -5211,6 +5211,8 @@ MonoBehaviour:
   Gloves:
   - {fileID: 7316309752335486449}
   - {fileID: 8846981716047026645}
+  IsStunned: 0
+  maxStunTime: 2
   M_PunchState: 0
   M_PlayerAnimationState: 2
   m_canPunch: 1
@@ -11013,7 +11015,7 @@ Transform:
   m_GameObject: {fileID: 7963264996312617047}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0.0000016689298}
-  m_LocalPosition: {x: 0.012, y: 1.5392036, z: -0.05}
+  m_LocalPosition: {x: 0.012, y: 1.5392036, z: -0.054}
   m_LocalScale: {x: 0.013619999, y: 0.013619999, z: 0.013619999}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12131,7 +12133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4044717213e31446939f7bd49c896ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_TrackedObjectOffset: {x: 0.09, y: 0.12, z: 0}
+  m_TrackedObjectOffset: {x: 0.09, y: 1.24, z: 0}
   m_LookaheadTime: 0
   m_LookaheadSmoothing: 0
   m_LookaheadIgnoreY: 0
@@ -12159,7 +12161,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 1
-  m_FollowOffset: {x: 0.1, y: 0.24, z: -0.6}
+  m_FollowOffset: {x: -0.72, y: -25.3, z: -0.6}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1

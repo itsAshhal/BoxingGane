@@ -29,6 +29,12 @@ namespace SimpleBoxing
         }
         public ShakeLevel M_ShakeLevel { get; set; }
 
+        private void Start()
+        {
+            DoShake(ShakeLevel.Low);
+            StunPlayer(false);
+        }
+
         public void DoShake(ShakeLevel shakeLevel)
         {
             StartCoroutine(DoShakeCoroutine(shakeLevel));
@@ -61,6 +67,7 @@ namespace SimpleBoxing
         {
             Debug.Log($"Camera stunned called {isStunned}");
             Animator anim = m_mainCamera.GetComponent<Animator>();
+            anim.enabled = isStunned;
             anim.SetBool("IsStunned", isStunned);
         }
 
