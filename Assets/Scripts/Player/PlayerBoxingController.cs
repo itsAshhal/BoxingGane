@@ -562,7 +562,8 @@ namespace SimpleBoxing.Player
                         EffectsController.Instance.SpawnParticle
                                                 (
                                                 EffectsController.Instance.HitEffects_NormalPunch[Random.Range(0, EffectsController.Instance.HitEffects_NormalPunch.Length)],
-                                                m_particleSpawnTransform.position
+                                                m_particleSpawnTransform.position,
+                                                true
                                                 );
 
 
@@ -575,7 +576,8 @@ namespace SimpleBoxing.Player
                         EffectsController.Instance.SpawnParticle
                                                 (
                                                 EffectsController.Instance.HitEffects_SpecialPunch[Random.Range(0, EffectsController.Instance.HitEffects_SpecialPunch.Length)],
-                                                m_particleSpawnTransform.position
+                                                m_particleSpawnTransform.position,
+                                                true
                                                 );
 
                         AudioController.Instance.PlaySound(PunchSound.Normal);

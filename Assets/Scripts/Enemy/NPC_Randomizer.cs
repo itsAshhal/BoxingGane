@@ -13,9 +13,11 @@ namespace SimpleBoxing.Enemy
     public class NPC_Randomizer : MonoBehaviour
     {
         public GameObject[] Collection;
+        public bool ShouldUseAssets = true;//
 
         private void Start()
         {
+            if (ShouldUseAssets == false) return;
             SetupCollection();
         }
 

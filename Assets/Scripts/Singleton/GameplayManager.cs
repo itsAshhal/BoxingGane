@@ -84,6 +84,9 @@ namespace SimpleBoxing
             // so if the enemy dies we need to restart the scene so the game keeps on being played
             if (isPlayerTheWinner)
             {
+                // before the restart timer gets 0, animate the opponent death VFX
+                NPC_DeathAnimation();
+
                 yield return new WaitForSeconds(RestartTimeWhenPlayerWins);
                 var _currentScore = int.Parse(Gameplay_UI_Manager.Instance.MainScoreText.text);
                 PlayerPrefs.SetInt("PlayerScore", _currentScore);
@@ -497,7 +500,8 @@ namespace SimpleBoxing
         {
             EffectsController.Instance.SpawnParticle(
                 EffectsController.Instance.DeathEffects[Random.Range(0, EffectsController.Instance.DeathEffects.Length)],
-                NPC.transform.position
+                NPC.transform.position,
+                true
                 );
 
             // do the fade animation as well
@@ -563,7 +567,7 @@ namespace SimpleBoxing
             if (level == AtWhichLevelTheStatsShouldStopIncreasing) level = AtWhichLevelTheStatsShouldStopIncreasing;
             float prob = level / 10.0f;  // Use 10.0f to ensure floating-point division
 
-            float ExtractedValue = prob / 3.5f;  // No need to cast again, it's already float
+            float ExtractedValue = prob / 5.0f;  // No need to cast again, it's already float
 
             // now add this value to EnemyDamageAmount and subtract it from PlayerDamageAmount
             Debug.Log($"ExtractedValue {ExtractedValue}");

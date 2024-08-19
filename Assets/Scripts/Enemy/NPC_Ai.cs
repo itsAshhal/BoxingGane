@@ -166,7 +166,10 @@ namespace SimpleBoxing.Enemy
             var tr = EffectsController.Instance.StunTransform;
             var particles = EffectsController.Instance.StunParticles;
             var part = particles[Random.Range(0, particles.Length)];
-            EffectsController.Instance.SpawnParticle(part, tr.position);   //Instantiate(part, tr.position, Quaternion.identity);
+            var part_2 = EffectsController.Instance.SpawnParticle(part, tr.position, true);   //Instantiate(part, tr.position, Quaternion.identity);
+            part_2.gameObject.transform.SetParent(EffectsController.Instance.StunTransform);
+            part_2.transform.rotation = part_2.transform.parent.transform.rotation;
+            part_2.transform.localScale = part_2.transform.parent.localScale;
             //instantiatedPart.AddComponent<Destroyer>().destroyTime = 2f;
         }
 
@@ -559,7 +562,7 @@ namespace SimpleBoxing.Enemy
                 // check if the player is blocking or not
                 if (GameplayManager.Instance.PlayerController.m_isBlocking && CurrentBlockPunches < PlayerBlockBreakerPunches)
                 {
-                    // technially we're blocking
+                    // technially the player is blocking
                     AudioController.Instance.PlaySound(PunchSound.Block);
 
                     // play the deflect animation as well and the return
@@ -573,7 +576,7 @@ namespace SimpleBoxing.Enemy
                     var effects = EffectsController.Instance.BlockEffects;
                     var randomEffect = effects[Random.Range(0, effects.Length)];
 
-                    EffectsController.Instance.SpawnParticle(randomEffect, collider.transform.position);
+                    EffectsController.Instance.SpawnParticle(randomEffect, collider.transform.position, true);
 
 
                     return;
