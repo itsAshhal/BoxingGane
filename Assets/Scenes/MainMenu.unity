@@ -1207,7 +1207,7 @@ GameObject:
   - component: {fileID: 4779375991225179521}
   - component: {fileID: 1130404002105836678}
   m_Layer: 5
-  m_Name: PlayBtn
+  m_Name: Coin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2734,8 +2734,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -67, y: 0}
-  m_SizeDelta: {x: 111.904175, y: 97.9224}
+  m_AnchoredPosition: {x: -57.913406, y: 7.3}
+  m_SizeDelta: {x: 130.0773, y: 113.8249}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &905434044121118595
 CanvasRenderer:
@@ -14010,7 +14010,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f30334ecfc8444948b842469ba7f48b3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: baffa3a1cc8a22944b73e90e6b66a92a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
