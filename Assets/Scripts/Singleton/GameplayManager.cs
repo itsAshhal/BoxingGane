@@ -34,7 +34,7 @@ namespace SimpleBoxing
         [SerializeField] int m_enemyNormalHitPunchScore;
         [SerializeField] float RestartTimeWhenPlayerWins = 2f;
         [Tooltip("Right now the enemy Ai seems to easy as its starting from 1 stage, we can set it to 4-5 to make a little harder")]
-        [SerializeField] int DifficultyLevelShouldStartFrom = 4;
+        public int DifficultyLevelShouldStartFrom = 4;
         public int AtWhichLevelTheStatsShouldStopIncreasing = 20;
         [Tooltip("It has 2 main features, when the enemy takes a punch and gets hit, he suddenly punches to break the player's momentum also when he takes a block he can do an instant punch again as well")]
         public int AtWhichLevelTheInstantAttackShouldBeStarted = 10;
@@ -93,7 +93,7 @@ namespace SimpleBoxing
 
                 // Set the playerHealth playerPref to 1 so it can be used again
                 float currentHealth = Gameplay_UI_Manager.Instance.PlayerHealthBar.fillAmount;
-                PlayerPrefs.SetFloat("PlayerHealth", (currentHealth + 0.2f));
+                PlayerPrefs.SetFloat("PlayerHealth", (currentHealth + 0.1f));
 
                 RestartScene();
             }
@@ -326,16 +326,42 @@ namespace SimpleBoxing
 
 
         /// <summary>
+        /// At first we need to get the difficulty level and after that for the whole we need a way to make this static so it doesn't keep on changing
+        /// since this function is being called from several places thats why
+        /// </summary>
+        bool difficultyLevelAttained = false;
+        /// <summary>
+        /// so once we get the difficulty level at start, we need this variable to keep hold of it so other calls of this method do not get different random 
+        /// difficulty levels
+        /// </summary>
+        int currentDifficultyLevel = 0;
+
+        /// <summary>
         /// Using this method, manage the increased difficulty of the NPC over time and over each win
         /// </summary>
         public int Get_DifficultyLevel()
         {
-            if (PlayerPrefs.HasKey("DifficultyLevel"))
+            /*if (PlayerPrefs.HasKey("DifficultyLevel"))
             {
                 Debug.Log($"DifficultyLevel is {PlayerPrefs.GetInt("DifficultyLevel")}");
                 return PlayerPrefs.GetInt("DifficultyLevel");
             }
-            else return DifficultyLevelShouldStartFrom;
+            else return DifficultyLevelShouldStartFrom;*/
+
+            // return a value between starting difficulty and the last stats difficulty at which after we're not increasing difficulty at all
+            if (difficultyLevelAttained == false)
+            {
+                int difficultyLevel = Random.Range(DifficultyLevelShouldStartFrom, AtWhichLevelTheStatsShouldStopIncreasing);
+                Debug.Log($"Current difficulty level is {difficultyLevel}");
+                this.currentDifficultyLevel = difficultyLevel;
+                difficultyLevelAttained = true;
+                return difficultyLevel;
+            }
+            else
+            {
+                Debug.Log($"Current difficulty level is {this.currentDifficultyLevel}");
+                return this.currentDifficultyLevel;
+            }
         }
 
         public void Set_DifficultyLevel(int level) => PlayerPrefs.SetInt("DifficultyLevel", level);
@@ -436,9 +462,9 @@ namespace SimpleBoxing
                     NPC.SetupCombo();
 
                     // ok so we need to check if the enemy has blacked out and lost the game or not
-                    if (Gameplay_UI_Manager.Instance.EnemyHealthBar.fillAmount <= 0f
+                    if (Gameplay_UI_Manager.Instance.EnemyHealthBar.fillAmount <= 0.00f
                         ||
-                        Gameplay_UI_Manager.Instance.EnemyHealthBar.fillAmount - PlayerDamageAmount <= 0f
+                        Gameplay_UI_Manager.Instance.EnemyHealthBar.fillAmount - PlayerDamageAmount <= 0.00f
                         )
                     {
                         // player has died 
@@ -560,7 +586,7 @@ namespace SimpleBoxing
 
         void SetUpDamageSystem()
         {
-            // based on the current level state
+            /*// based on the current level state
             // we need to set the damage
             // remember that, higher the difficulty level, Player damage is low and enemy damage is higher
             var level = Get_DifficultyLevel();  // Ensure this returns an int
@@ -569,10 +595,23 @@ namespace SimpleBoxing
 
             float ExtractedValue = prob / 5.0f;  // No need to cast again, it's already float
 
-            // now add this value to EnemyDamageAmount and subtract it from PlayerDamageAmount
             Debug.Log($"ExtractedValue {ExtractedValue}");
-            EnemyDamageAmount += ExtractedValue;
+            Debug.Log($"ExtractedValue {ExtractedValue}");
+            EnemyDamageAmount += ExtractedValue;*/
             //PlayerDamageAmount -= ExtractedValue;  // for right now we're not increasing the player damage amount
+
+
+            // setting up a new damage system which will be random between 5% to 10% of the player's health
+
+            // first get a random value between 5 and 10
+            int randomDamage = Random.Range(5, 11);
+
+            // get the desired percentage based on the random value we just calculated
+            // since the player's health bar is 0-1 so 5% of it would be 0.05 for example
+            // just divide the damage by 100
+            float percentage = randomDamage / 100.0f;
+            Debug.Log($"Damage percentage we got is {percentage}");
+            EnemyDamageAmount = percentage;
         }
 
         void SetupEnemyAnimationSpeed()

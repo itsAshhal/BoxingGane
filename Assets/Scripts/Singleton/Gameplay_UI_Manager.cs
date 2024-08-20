@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
+using UnityEngine.Rendering;
 
 namespace SimpleBoxing
 {
@@ -34,12 +35,17 @@ namespace SimpleBoxing
         public GameObject GameOverMenu;
         public TMP_Text CurrentScoreText;
         public TMP_Text HighestScoreText;
-
+        public Button[] ButtonsToDisableAtStart;
 
         private void Awake()
         {
             if (Instance != this && Instance != null) Destroy(this);
             else Instance = this;
+        }
+
+        private void Start()
+        {
+            foreach (var btn in ButtonsToDisableAtStart) btn.interactable = false;
         }
 
         public void DoFadeAnimation(bool fadeIn = true, bool startSceneAsWell = false)
@@ -130,6 +136,9 @@ namespace SimpleBoxing
         /// </summary>
         public void DisplayGameOverPanel()
         {
+            // enable the buttons first
+            foreach (var btn in ButtonsToDisableAtStart) btn.interactable = true;
+
             Animator anim = GameOverMenu.GetComponent<Animator>();
             anim.CrossFade("Appear", .1f);
 

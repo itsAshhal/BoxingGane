@@ -98,6 +98,34 @@ namespace SimpleBoxing.Enemy
             Invoke(nameof(EnableHitAre), GameplayManager.Instance.GameplayStartTime);
         }
 
+        private void OnEnable()
+        {
+            SetupComboRepeitionRateBasedOnDifficulty();
+        }
+
+
+        /// <summary>
+        /// Based on difficulty levels, we need to set up the combo repetition rate so easy enemies have more time between combos and stronger enemies will have less time between
+        /// combos making it much more difficulty for the player to survive
+        /// </summary>
+        void SetupComboRepeitionRateBasedOnDifficulty()
+        {
+            var comboStartingValue = GameplayManager.Instance.DifficultyLevelShouldStartFrom;
+            var comboEndingValue = GameplayManager.Instance.AtWhichLevelTheStatsShouldStopIncreasing;
+            var difficultyLevel = GameplayManager.Instance.Get_DifficultyLevel();
+
+            // now lets say the starting value is 5 and the ending value is 20
+            // but for combo repetition we have a max difference of 1.25 i.e from 0.25f to 1.5f
+
+            // 5-20 takes 15 steps to complete, so divide 1.25f in such a way it also takes 15 steps
+            if (difficultyLevel >= 17 && difficultyLevel <= 20) m_comboRepititionRate = .25f;
+            else if (difficultyLevel >= 14 && difficultyLevel <= 16) m_comboRepititionRate = .5f;
+            else if (difficultyLevel >= 10 && difficultyLevel <= 13) m_comboRepititionRate = 1f;
+            else m_comboRepititionRate = 1.25f;
+
+            Debug.Log($"Combo Repetition Rate set is {m_comboRepititionRate}");
+        }
+
         void EnableHitAre()
         {
             HitArea().enabled = true;
@@ -336,10 +364,17 @@ namespace SimpleBoxing.Enemy
             int tooManyTakes = Random.Range(0, 100);
             if (tooManyTakes % 2 == 0)
             {
-                // do the instant attack
-                if (Random.Range(0, 10) % 2 == 0) DoRightHandPunch();
-                else DoLeftHandPunch();
+                // so the enemy will throw an instant punch to the enemy to break his momentum
+                CancelInvoke(nameof(DoInstantAttackOverTime));
+                Invoke(nameof(DoInstantAttackOverTime), .5f);
             }
+        }
+
+        void DoInstantAttackOverTime()
+        {
+            // do the instant attack
+            if (Random.Range(0, 10) % 2 == 0) DoRightHandPunch();
+            else DoLeftHandPunch();
         }
 
 
@@ -587,6 +622,7 @@ namespace SimpleBoxing.Enemy
                 {
                     // now since the block of the player just got broken, do some stun animation on the camera
                     // CinematicsController.Instance.StunPlayer();
+                    return;  // right now we don't want the player to be stunned as per client's requirements
                     Debug.Log("Blocks are equal to punches");
                     GameplayManager.Instance.PlayerController.IsStunned = true;//
                     // return;
