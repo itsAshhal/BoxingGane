@@ -46,6 +46,8 @@ namespace SimpleBoxing.Enemy
         private float m_blockDurationTimer = 0f;
         [Header("Consistent punches break the block")]
         public int MaxPunchesToBreakTheBlock = 3;
+        [Tooltip("This is a special mechanics which is used so if the player keeps on punching the enemy, the enemy can somwhoe break the punches and break the player's momentum as well")]
+        public int HowManyInstantPunchesCanThePlayerThrow = 3;
         /// <summary>
         /// So when these punches exceed the limit for breaker, NPC block is broken
         /// </summary>
@@ -66,6 +68,9 @@ namespace SimpleBoxing.Enemy
         public float StunRecoveryTime = 5f;  // as because the animation takes 5 seconds approx seconds to complete
         public bool IsStunned = false;
         public float m_stunTimer = 0.0f;
+
+
+        private ParticleSystem SpawnedStun;
 
         public enum PunchState
         {
@@ -101,6 +106,7 @@ namespace SimpleBoxing.Enemy
         private void OnEnable()
         {
             SetupComboRepeitionRateBasedOnDifficulty();
+            m_stunTimer = 0.0f;
         }
 
 
@@ -163,6 +169,9 @@ namespace SimpleBoxing.Enemy
                     m_stunTimer = 0.0f;
                     CanPunch = true;
                     m_anim.SetLayerWeight(2, 0f);
+
+                    // delete the particle as well if it exists
+                    if (SpawnedStun != null) Destroy(SpawnedStun.gameObject);
                 }
 
 
@@ -198,6 +207,8 @@ namespace SimpleBoxing.Enemy
             part_2.gameObject.transform.SetParent(EffectsController.Instance.StunTransform);
             part_2.transform.rotation = part_2.transform.parent.transform.rotation;
             part_2.transform.localScale = part_2.transform.parent.localScale;
+
+            SpawnedStun = part_2;
             //instantiatedPart.AddComponent<Destroyer>().destroyTime = 2f;
         }
 
@@ -372,9 +383,22 @@ namespace SimpleBoxing.Enemy
 
         void DoInstantAttackOverTime()
         {
+            StartCoroutine(DoInstantAttackCoroutine());
+        }
+
+        IEnumerator DoInstantAttackCoroutine()
+        {
             // do the instant attack
-            if (Random.Range(0, 10) % 2 == 0) DoRightHandPunch();
-            else DoLeftHandPunch();
+
+            for (int i = 1; i <= HowManyInstantPunchesCanThePlayerThrow; i++)
+            {
+                if (Random.Range(0, 10) % 2 == 0) DoRightHandPunch();
+                else DoLeftHandPunch();
+
+                yield return new WaitForSeconds(Random.Range(.5f, .8f));
+            }
+
+
         }
 
 
@@ -618,15 +642,19 @@ namespace SimpleBoxing.Enemy
                 }
 
                 // make a simple conditioal for checking if the player blocks and enemy punches are equals it means the block will be broekn now
-                if (CurrentBlockPunches == PlayerBlockBreakerPunches)
-                {
-                    // now since the block of the player just got broken, do some stun animation on the camera
-                    // CinematicsController.Instance.StunPlayer();
-                    return;  // right now we don't want the player to be stunned as per client's requirements
-                    Debug.Log("Blocks are equal to punches");
-                    GameplayManager.Instance.PlayerController.IsStunned = true;//
-                    // return;
-                }
+
+                // The following condition specified the stunning of the main player controller but since the client removed it so its not being used anymore
+
+                // if (CurrentBlockPunches == PlayerBlockBreakerPunches)
+                // {
+                //     // now since the block of the player just got broken, do some stun animation on the camera
+                //     // CinematicsController.Instance.StunPlayer();
+                //     Debug.Log($"CurrentBlockPunches == PlayerBlockBreakerPunches");
+                //     return;  // right now we don't want the player to be stunned as per client's requirements
+                //     Debug.Log("Blocks are equal to punches");
+                //     GameplayManager.Instance.PlayerController.IsStunned = true;//
+                //     // return;
+                // }
 
                 // since the player has been hit, use the consecutive here 
                 GameplayManager.Instance.IsConsecutive = false;

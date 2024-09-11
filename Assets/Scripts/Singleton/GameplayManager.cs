@@ -16,6 +16,13 @@ namespace SimpleBoxing
 {
     public class GameplayManager : MonoBehaviour
     {
+        #region ColorOptions
+
+        public Color[] PlayerColors;
+        public Material[] PlayerMaterials;
+
+        #endregion
+
         #region ScoringAndUI
 
         // These 3 major callbacks are called on specific areas in this script and their bindings are used by different method
@@ -214,6 +221,14 @@ namespace SimpleBoxing
 
             // ok here when the scene reloads, we need to set the proper score for the player
             SetScoreProperly();
+
+            ChangePlayerColor();
+        }
+
+        void ChangePlayerColor()
+        {
+            var selectedColor = PlayerColors[Random.Range(0, PlayerColors.Length)];
+            foreach (var material in PlayerMaterials) material.color = selectedColor;
         }
 
         /// <summary>

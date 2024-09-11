@@ -1035,7 +1035,7 @@ Transform:
   m_GameObject: {fileID: 1206648693945182597}
   serializedVersion: 2
   m_LocalRotation: {x: 0.09253232, y: -0.011825743, z: 0.03883666, w: 0.9948818}
-  m_LocalPosition: {x: 0.028, y: 0.611, z: 0.21}
+  m_LocalPosition: {x: 0.028, y: 0.615, z: 0.524}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2199,7 +2199,7 @@ Transform:
   m_GameObject: {fileID: 1669479094985481871}
   serializedVersion: 2
   m_LocalRotation: {x: 0.09253032, y: -0.011826573, z: 0.03883631, w: 0.9948819}
-  m_LocalPosition: {x: 0.02, y: 1.65, z: -0.3}
+  m_LocalPosition: {x: 0.02, y: 0.64, z: -0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2227,7 +2227,7 @@ MonoBehaviour:
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
   m_Lens:
-    FieldOfView: 75.27
+    FieldOfView: 79.4
     OrthographicSize: 5
     NearClipPlane: 0.04
     FarClipPlane: 193.13
@@ -5202,7 +5202,7 @@ MonoBehaviour:
   ShakeDuration: 0.1
   m_particleSpawnTransform: {fileID: 3097526682109768532}
   TotalPunches: 0
-  m_punchesDelay: 0.25
+  m_punchesDelay: 0
   m_hitArea: {fileID: 2811115579095170214}
   m_isBlocking: 0
   m_blockRecoveryTime: 1.5

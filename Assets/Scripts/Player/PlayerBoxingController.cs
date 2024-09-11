@@ -527,11 +527,11 @@ namespace SimpleBoxing.Player
 
                 if (npc.m_isBlocking == false)
                 {
-                    npc.IsStunned = false;
+                    //npc.IsStunned = false;
                     npc.GetComponent<Animator>().SetLayerWeight(2, 0f);
                     npc.GetComponent<RigBuilder>().enabled = true;
                     m_canPunch = true;
-                    npc.m_stunTimer = 0.0f;
+                    //npc.m_stunTimer = 0.0f;
                     npc.CanPunch = true;
 
                     // Apply the damage as well
